@@ -1,0 +1,47 @@
+<!-- here auto download is not  -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLS Player with Debugging</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <video id="video" controls></video>
+    <div id="debug"></div>
+    <script>
+        var video = document.getElementById('video');
+        var debugElement = document.getElementById('debug');
+        var videoSrc = 'http://localhost:3000/manifest';
+
+        function addDebugMessage(message) {
+            debugElement.innerHTML += message + '<br>';
+            console.log(message);
+        }
+
+        if (Hls.isSupported()) {
+            var hls = new Hls({debug: true});
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                addDebugMessage('Manifest parsed, trying to play');
+                video.play();
+            });
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                addDebugMessage('Error: ' + data.type + ' - ' + data.details);
+            });
+            hls.on(Hls.Events.FRAG_LOADING, function (event, data) {
+                addDebugMessage('Loading fragment: ' + data.frag.url);
+            });
+        }
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function() {
+                addDebugMessage('Metadata loaded, trying to play');
+                video.play();
+            });
+        }
+    </script>
+</body>
+</html> -->

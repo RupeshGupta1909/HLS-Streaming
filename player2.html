@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HLS Player with Progressive Loading</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+    <video id="video" controls></video>
+    <div id="debug"></div>
+    <script>
+        var video = document.getElementById('video');
+        var debugElement = document.getElementById('debug');
+        var videoSrc = 'http://localhost:3000/manifest';
+
+        function addDebugMessage(message) {
+            debugElement.innerHTML += message + '<br>';
+            console.log(message);
+        }
+
+        if (Hls.isSupported()) {
+            var hls = new Hls({
+                debug: true,
+                autoStartLoad: true,
+                startPosition: -1,
+                maxBufferLength: 30,
+                maxMaxBufferLength: 600,
+                maxBufferSize: 60 * 1000 * 1000,
+                maxBufferHole: 0.5,
+                lowLatencyMode: false,
+                manifestLoadingTimeOut: 20000,
+                manifestLoadingMaxRetry: 3,
+                manifestLoadingRetryDelay: 1000,
+                levelLoadingTimeOut: 20000,
+                levelLoadingMaxRetry: 4,
+                levelLoadingRetryDelay: 1000
+            });
+
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                addDebugMessage('Manifest parsed, trying to play');
+                video.play().catch(e => addDebugMessage('Play failed: ' + e));
+            });
+
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            addDebugMessage('Fatal network error encountered, trying to recover');
+                            hls.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            addDebugMessage('Fatal media error encountered, trying to recover');
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            addDebugMessage('Fatal error, cannot recover');
+                            hls.destroy();
+                            break;
+                    }
+                } else {
+                    addDebugMessage('Non-fatal error: ' + data.type + ' - ' + data.details);
+                }
+            });
+
+            hls.on(Hls.Events.FRAG_LOADING, function (event, data) {
+                addDebugMessage('Loading fragment: ' + data.frag.url);
+            });
+
+            hls.on(Hls.Events.FRAG_LOADED, function (event, data) {
+                addDebugMessage('Loaded fragment: ' + data.frag.url);
+            });
+
+            video.addEventListener('play', function() {
+                addDebugMessage('Playback started');
+            });
+
+            video.addEventListener('pause', function() {
+                addDebugMessage('Playback paused');
+            });
+
+            video.addEventListener('ended', function() {
+                addDebugMessage('Playback ended');
+            });
+        }
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function() {
+                addDebugMessage('Metadata loaded, trying to play');
+                video.play().catch(e => addDebugMessage('Play failed: ' + e));
+            });
+        }
+    </script>
+</body>
+</html>
